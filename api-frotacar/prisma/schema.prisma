@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int         @id @default(autoincrement())
+  email       String      @unique
+  name        String
+  password    String
+  checklists  Checklist[]
+  logs        TravelLog[]
+}
+
+model Branch {
+  id        Int             @id @default(autoincrement())
+  name      String
+  vehicles  Vehicle[]
+  routes    Route[]
+  requests  TravelRequest[]
+}
+
+model Vehicle {
+  id              Int     @id @default(autoincrement())
+  plate           String
+  defaultBranchId Int?
+  defaultBranch   Branch? @relation(fields: [defaultBranchId], references: [id])
+}
+
+model City {
+  id         Int     @id @default(autoincrement())
+  name       String
+  routesFrom Route[] @relation("RouteOrigin")
+  routesTo   Route[] @relation("RouteDestination")
+}
+
+model Route {
+  id            Int           @id @default(autoincrement())
+  branchId      Int
+  branch        Branch        @relation(fields: [branchId], references: [id])
+  originId      Int?
+  origin        City?         @relation("RouteOrigin", fields: [originId], references: [id])
+  destinationId Int?
+  destination   City?         @relation("RouteDestination", fields: [destinationId], references: [id])
+  requests      TravelRequest[]
+}
+
+model Sector {
+  id       Int              @id @default(autoincrement())
+  name     String
+  requests TravelRequest[]
+}
+
+model TravelMotive {
+  id       Int              @id @default(autoincrement())
+  name     String
+  requests TravelRequest[]
+}
+
+model VehicleType {
+  id       Int              @id @default(autoincrement())
+  name     String
+  requests TravelRequest[]
+}
+
+model CancelMotive {
+  id       Int              @id @default(autoincrement())
+  name     String
+  requests TravelRequest[]
+}
+
+model TravelRequest {
+  id            Int           @id @default(autoincrement())
+  sectorId      Int
+  sector        Sector        @relation(fields: [sectorId], references: [id])
+  routeId       Int
+  route         Route         @relation(fields: [routeId], references: [id])
+  branchId      Int
+  branch        Branch        @relation(fields: [branchId], references: [id])
+  motiveId      Int
+  motive        TravelMotive  @relation(fields: [motiveId], references: [id])
+  vehicleTypeId Int
+  vehicleType   VehicleType   @relation(fields: [vehicleTypeId], references: [id])
+  cancelMotiveId Int?
+  cancelMotive   CancelMotive? @relation(fields: [cancelMotiveId], references: [id])
+}
+
+enum ChecklistKind {
+  SAIDA
+  CHEGADA
+}
+
+model Checklist {
+  id          Int           @id @default(autoincrement())
+  kind        ChecklistKind
+  createdById Int
+  createdBy   User          @relation(fields: [createdById], references: [id])
+}
+
+enum ImageKind {
+  FRENTE
+  LAT_ESQ
+  LAT_DIR
+  TRASEIRA
+  PAINEL
+  EXTRA
+}
+
+model Image {
+  id              Int              @id @default(autoincrement())
+  name            String
+  kind            ImageKind
+  bytes           Bytes
+  checklistImages ChecklistImage[]
+}
+
+model ChecklistImage {
+  id        Int     @id @default(autoincrement())
+  imageId   Int
+  image     Image   @relation(fields: [imageId], references: [id])
+}
+
+model TravelLog {
+  id     Int    @id @default(autoincrement())
+  userId Int
+  user   User   @relation(fields: [userId], references: [id])
+}
